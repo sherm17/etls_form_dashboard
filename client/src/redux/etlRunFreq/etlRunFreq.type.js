@@ -1,0 +1,6 @@
+const EtlRunFreqTypes = {
+  RUN_FREQ_INFO_FETCH_SUCCESS: 'RUN_FREQ_INFO_FETCH_SUCCESS',
+  RUN_FREQ_INFO_FETCH_ERROR: 'RUN_FREQ_INFO_FETCH_ERROR'
+}
+
+export default EtlRunFreqTypes;

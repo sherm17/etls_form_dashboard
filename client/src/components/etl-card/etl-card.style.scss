@@ -1,0 +1,25 @@
+.etl-card {
+  width: 400px;
+  border: 1px solid;
+  height: 200px;
+  margin-bottom: 30px;
+}
+
+.card-header {
+  display: flex;
+  padding: 0 !important;
+  line-height: 40px;
+}
+
+.etl-run-status {
+  margin-left: auto;
+}
+
+
+.success {
+  background: rgb(96, 192, 96)
+}
+
+.failed {
+  background: rgb(236, 88, 88)
+}
