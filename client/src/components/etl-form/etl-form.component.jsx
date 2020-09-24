@@ -66,22 +66,12 @@ class EtlForm extends Component {
       const { resetEtlDeleteSuccess, resetEtlUpdateSuccess } = this.props;
       resetEtlDeleteSuccess();
       resetEtlUpdateSuccess();
-      // console.log(this.props);
 
       e.preventDefault();
       const etlName = e.target.value;
-      const selectedEtlKey = e.target.key;
 
       // Default values
-      let showDailyRunCheckbox = true;
       let days_ran = [];
-      let selectedEtlStartTime = "";
-      let selectedEtlEndTime = "";
-      let selectedEtlPath = "";
-      let selectedEtlDataAffect = "";
-      let selectedEtlDesc = "";
-      let selectedEtlComments = "";
-      let selectedEtlRunTime = "";
       let isRanDaily = true;
       let start_time = "", end_time = "";
       let etl_path = "";
@@ -125,7 +115,7 @@ class EtlForm extends Component {
         selectedEtlDesc: description,
         selectedEtlComments: comments,
 
-      }, () => console.log(this.state));
+      });
     }
 
     toggleRadioButton = (e) => {
@@ -133,7 +123,7 @@ class EtlForm extends Component {
         Handle radio button toggle - used to update newRunFreq and showDailyRunCheckBox 
         in state. showDailyRunCheckBox is used to display checkboxes for Monday-Friday
       */
-      const { showDailyRunCheckbox, selectedEtlRunTime } = this.state;
+      const { showDailyRunCheckbox } = this.state;
       let newRunFreq = "Daily";
 
       if (showDailyRunCheckbox) {
@@ -143,7 +133,7 @@ class EtlForm extends Component {
       this.setState({
         showDailyRunCheckbox: !this.state.showDailyRunCheckbox,
         selectedEtlRunTime: newRunFreq
-      }, () => console.log(this.state));
+      });
     }
 
     handleWeeklyRunDayCheck = (e) => {
@@ -155,12 +145,12 @@ class EtlForm extends Component {
       if (checkboxIsChecked) {
         this.setState({
           days_ran: [...this.state.days_ran, currCheckedDay]
-        }, () => console.log(this.state.days_ran));
+        });
       } else {
         const filterOutDay = this.state.days_ran.filter(day => day !== currCheckedDay);
         this.setState({
           days_ran: [...filterOutDay]
-        }, () => console.log(this.state.days_ran))
+        });
       }
     }
 
@@ -191,10 +181,9 @@ class EtlForm extends Component {
       let currInputVal = e.target.value;
       const inputName = e.target.name;
 
-      // currInputVal = currInputVal == "" ? null : currInputVal;
       this.setState({
         [inputName]: currInputVal
-      }, () => console.log(this.state));
+      });
     }
 
     handleTextboxChange = (e) => {
@@ -214,8 +203,18 @@ class EtlForm extends Component {
     }
 
     timeIsCorrectFormat = (timeStr) => {
-      console.log(timeStr);
-      return /^\d\d:\d\d:\d\d$/.test(timeStr);
+      const correctTimeFormat = /^\d\d:\d\d:\d\d$/.test(timeStr);
+      if (correctTimeFormat) {
+        const timeArr = timeStr.split(":");
+        const hourIsCorrect = parseInt(timeArr[0]) <= 23;
+        const minuteIsCorrect = parseInt(timeArr[1]) <= 59;
+        const secondsIsCorrect = parseInt(timeArr[2]) <= 59;
+
+        if (hourIsCorrect && minuteIsCorrect && secondsIsCorrect) {
+          return true
+        }
+      } 
+      return false;
     }
 
     handleSubmit = (e) => {
@@ -225,7 +224,6 @@ class EtlForm extends Component {
       e.preventDefault();
 
       const etlUrlEndPoint = "http://localhost:3001/etl/";
-      const createetlUrl = "";
       
       const { 
         selectedEtlName, selectedEtlStartTime, selectedEtlEndTime,
@@ -297,20 +295,18 @@ class EtlForm extends Component {
 
         newEtlName: "",
 
-      }, () => console.log(this.state))
+      })
     }
 
 
     render() {
-      console.log("----rerendering------");
       let { showDailyRunCheckbox, selectedEtlStartTime, selectedEtlEndTime,
         selectedEtlDataAffect, selectedEtlDesc, selectedEtlPath,
-        selectedEtlComments, selectedEtlRunTime, selectedEtlName, newEtlName
+        selectedEtlComments, selectedEtlName, newEtlName
       } = this.state;
 
       const { 
-        isEditing, etlDeleteWasSuccessful, etlUpdateWasSuccessful, etlAddWasSuccessful, timeFormatEntryIsCorrect, etlAlreadyExist,
-        etlInfo
+        isEditing, etlDeleteWasSuccessful, etlUpdateWasSuccessful, etlAddWasSuccessful, timeFormatEntryIsCorrect, etlAlreadyExist
       } = this.props;
       let displayMessageForSubmit;
 
@@ -371,7 +367,9 @@ class EtlForm extends Component {
       // create multiple inputs based on data/label passed in
       const inputsDisplay = inputData.map(data => {
         const { type } = data;
-        if (isEditing && type === "newEtl") return
+        if (isEditing && type === "newEtl") {
+          return;
+        }
 
         let currVal;
         switch (type) {
@@ -405,7 +403,7 @@ class EtlForm extends Component {
         const { showDailyRunCheckbox } = this.state;
         let checked = showDailyRunCheckbox;
 
-        if (label == "Weekly") {
+        if (label === "Weekly") {
           checked = !showDailyRunCheckbox
         }
 
@@ -420,7 +418,7 @@ class EtlForm extends Component {
       });
 
       const textboxDisplay = textboxData.map(data => {
-        const { label, val } = data;
+        const { label } = data;
 
         let currText;
         switch (label) {

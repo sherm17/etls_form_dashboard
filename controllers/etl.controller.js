@@ -1,14 +1,11 @@
 const ETL = require('../models/etl.model');
 
 function escapeSingleQuotes(reqBodyObj) {
-  console.log("In escape single quote function");
   let reqBodyCopy = Object.assign({}, reqBodyObj);
   for (const property in reqBodyCopy) {
     let value = reqBodyCopy[property];
     if (value !== null && typeof value !== "boolean") {
-      console.log("current value is " + value);
       if (value.indexOf("'") != -1) {
-        console.log("found apostraphe");
         reqBodyCopy[property] = value.replace("'", "''");
       }
     }
@@ -42,7 +39,7 @@ exports.createEtl = (req, res) => {
       res.send(apiResponse);
     })
     .catch(e => {
-      console.log("======= wtf =======");
+      console.log("-------- wtf --------");
       apiResponse.success = false;
       apiResponse.message = "Failed to create new ETL"
       res.send(apiResponse)
@@ -88,12 +85,10 @@ exports.deleteETL = (req, res) => {
 
   ETL.deleteETL(etl_name)
     .then(databaseResponse => {
-      console.log('--------- SUCCESS --------');
       apiResponse.message = `successfuly removed ETL: ${etl_name}`;
       res.send(apiResponse);
     })
     .catch(e => {
-      console.log('--------- ERROR --------');
       apiResponse.message = e.detail;
       res.send(apiResponse);
     });
@@ -113,12 +108,13 @@ exports.getETLRunStatus = (req, res) => {
     month = dateArr[0], day = dateArr[1], year = dateArr[2];
   } else {
     const todaysDate = new Date();
-    month = datetime.getUTCMonth() + 1;
-    day  = datetime.getUTCDate();
-    year = datetime.getUTCFullYear();
+    month = String(todaysDate.getMonth() + 1).padStart(2, '0'); 
+    day  = String(todaysDate.getDate()).padStart(2, '0');
+    year = todaysDate.getFullYear();
+
   }
 
-  const dateString = `${month}-${day}-${year}`
+  const dateString = `${month}-${day}-${year}`;
   ETL.getRunStatues(dateString)
     .then(databaseResponse => {
       apiResponse.message = `successfully got data for ${dateString}`;
@@ -189,10 +185,4 @@ exports.getEtlInfo = (req, res) => {
     })
 }
 
-exports.test = async (req, res) => {
-  const result = await ETL.test();
-  console.log(result);
-  res.send(result);
-    
-}
 

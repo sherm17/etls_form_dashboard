@@ -4,12 +4,10 @@ import "./home-page.style.scss";
 import { connect } from "react-redux";
 
 // components
-import SideBar from "../../components/sidebar/sidebar.component";
 import EtlCardView from "../../components/etl-cards-view/etl-cards-view.component";
 import PieChart from "../../components/etl_run_status_piechart/piechart.component";
 
 // actions
-import fetchEtlTableInfo from "../../redux/etlTableInfo/etlTableInfo.action";
 import fetchRunStatuses from "../../redux/etlRunStatus/etlRunStatus.action"
 import fetchRunFreq from "../../redux/etlRunFreq/etlRunFreq.action";
 /*
@@ -19,57 +17,37 @@ import fetchRunFreq from "../../redux/etlRunFreq/etlRunFreq.action";
 
 
 class HomePage extends Component {
-  constructor(props) {
-    super(props);
-  }
+
 
   componentDidMount() {
-    const urlForEtlStatuses = "http://localhost:3001/etl/run_statuses/8-26-2020";
+    // const urlForEtlStatuses = "http://localhost:3001/etl/run_statuses/8-26-2020";
+    const urlForEtlStatusesToday = "http://localhost:3001/etl/run_statuses"
     const urlForEtlRunFreq = "http://localhost:3001/etl/run_freqency";
 
     const { getRunStatusesForEtls, getEtlRunFrequencys } = this.props;
-    getRunStatusesForEtls(urlForEtlStatuses);
+    getRunStatusesForEtls(urlForEtlStatusesToday);
     getEtlRunFrequencys(urlForEtlRunFreq);
-
-    // getEtlRunStatuses(urlForEtlStatuses);
-    // getEtlRunFreq(urlForEtlRunFreq);
   }
 
   render() {
     const { etlRunStatusArr } = this.props;
-    
 
     let numOfEtl = 0;
-    let numOfEtlSuccess = 0;
-    let numOfEtlFailure = 0;
-
-    if ( etlRunStatusArr && etlRunStatusArr.length > 0) {
-      numOfEtl = etlRunStatusArr.length;
-      
-      etlRunStatusArr.forEach(etl => {
-        const { completed } = etl;
-        if (completed) numOfEtlSuccess += 1;
-        else numOfEtlFailure += 1;
-      })
-    }
-
-
     let etlSuccessCount = 0;
     let etlFailedCount = 0;
     let etlNoResponseCount = 0;
 
-    
-
-    if (etlRunStatusArr) {
+    if (etlRunStatusArr && etlRunStatusArr.length > 0) {
       etlRunStatusArr.forEach(etl => {
-        const { completed } = etl;
-        if (completed === true) {
+        const { completed, started } = etl;
+        numOfEtl += 1;
+        if (!started) {
+          etlNoResponseCount += 1;
+        } else if (completed === true) {
           etlSuccessCount += 1;
-        } else if (completed == false) {
+        } else if (completed === false) {
           etlFailedCount += 1;
-        } else {
-          etlNoResponseCount += 1
-        }
+        } 
       });
     }
 
@@ -88,10 +66,13 @@ class HomePage extends Component {
               ETL Total:{numOfEtl}
             </div>
             <div>
-              ETL Success: {numOfEtlSuccess}
+              ETL Success: {etlSuccessCount}
             </div>
             <div>
-              ETL Failed: {numOfEtlFailure}
+              ETL Failed: {etlFailedCount}
+            </div>
+            <div>
+              ETL did not start: {etlNoResponseCount}
             </div>
           </div>
 
@@ -119,12 +100,8 @@ const mapDispatchToProps = dispatch => {
 }
 
 const mapStateToProps = (state) => {
-  const { etlTableInfo } = state;
-  const { etlInfo } = etlTableInfo;
-
   const { etlRunStatuses } = state;
   const runStatuesArr = etlRunStatuses.runStatuses.data;
-  const etlArr = [];
 
   return {
     etlRunStatusArr: runStatuesArr

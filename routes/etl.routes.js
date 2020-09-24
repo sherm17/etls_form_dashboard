@@ -23,5 +23,4 @@ module.exports = app => {
   app.get("/etl/run_freqency", etlController.getDistinctRunTimes);
   app.get("/etl/etl_names", etlController.getEtlNames);
   app.get("/etl/etl_info", etlController.getEtlInfo);
-  app.put("/test", etlController.test)
 }

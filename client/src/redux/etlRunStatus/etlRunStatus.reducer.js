@@ -9,10 +9,6 @@ const INITIAL_STATE = {
 export function etlRunStatuses(state = INITIAL_STATE, action) {
   switch (action.type) {
     case EtlRunStatusTypes.FETCH_SUCCESS:
-      console.log("FETCH STATUS RUN SUCCESS");
-      // get unique run freq days
-      const { runStatusData } = action;
-      const { data } = runStatusData;
       return {
         ...state,
         runStatuses: action.runStatusData
@@ -31,24 +27,3 @@ export function etlRunStatuses(state = INITIAL_STATE, action) {
       return state;
   }
 }
-
-// export function etlRunStatusHasErrored(state = false, action) {
-//   switch (action.type) {
-//     case (EtlRunStatusTypes.FETCH_ERROR):
-//       return action.hasErrored
-//     default:
-//       return state;
-//   }
-// }
-
-// export function etlRunStatusIsLoading(state = false, action) {
-//   switch (action.type) {
-//     case (EtlRunStatusTypes.IS_LOADING):
-//       return action.isLoading;
-//     default:
-//       return state;
-//   }
-// }
-
-
-

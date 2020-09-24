@@ -86,7 +86,7 @@ const deleteEtlSuccess = (etlName) => ({
 });
 
 const deleteEtlHasErrored = (bool) => ({
-  type: EtlTableInfoType. ETL_DELETE_ERROR,
+  type: EtlTableInfoType.ETL_DELETE_ERROR,
   bool
 });
 

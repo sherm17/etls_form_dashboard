@@ -53,12 +53,9 @@ class ETL {
           throw e
         });
 
-      // console.log("--------------");
-      // console.log(this.days_ran);
-      // console.log("--------------");
-
       if (this.run_frequency === "Daily") {
          await pgClient.query(newEtlRunTimeInsertQuery, [this.name, "Daily"]);
+         return "success";
       } else if (this.run_frequency === "Multiple-Days") {
         for (const day of this.days_ran) {
           console.log("on day " + day);
@@ -141,8 +138,6 @@ class ETL {
           return "success";
       }
     } catch (e) {
-      console.log(e);
-      console.log("rolling back");
       await pgClient.query("ROLLBACK");
       throw e
     }
@@ -161,9 +156,9 @@ class ETL {
       *
       FROM
       etls
-      INNER JOIN etls_run_status
+      LEFT JOIN etls_run_status
       ON name = etl_name
-      Where etls_run_status.date_ran = '${dateStr}';
+      Where etls_run_status.date_ran = '${dateStr}' or etls_run_status.date_ran is null;
     `
     return pgClient.query(getRunStatusQuery);
   }
@@ -208,25 +203,6 @@ class ETL {
       await pgClient.query("ROLLBACK");
       return "error";
     }
-
-    // arr.forEach(async(day) => {
-    //   console.log('doing ' + day);
-    //   const insertQuery = `
-    //   insert into etl_run_times
-    //   (etl_name, run_frequency)
-    //   values
-    //   ('test',   y${day})
-    //   `
-    //   await pgClient
-    //     .query(insertQuery)
-    //     .catch(e => {
-    //       return "error";
-    //       pgClient.query("ROLLBACK");
-    //     });
-    // })
-
-
-
   }
 }
 

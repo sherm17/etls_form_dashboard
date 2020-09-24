@@ -1,9 +1,6 @@
 import * as React from "react";
 import * as d3 from "d3";
 
-// order is success, failed, no response
-
-
 const PieChart = ({ data }) => {
   const height = 400;
   const width = 400;
@@ -33,9 +30,7 @@ const Slice = props => {
   // Slice color is based 
   const successIndex = 0;
   const failedIndex = 1;
-  const noResponseIndex = 2;
-
-
+  
   return pie.map((slice, index) => {
     const successColor = "#3cbc33";
     const failedColor = "#e64432";
