@@ -28,22 +28,27 @@ const Slice = props => {
     .outerRadius(100);
 
   // Slice color is based 
-  const successIndex = 0;
-  const failedIndex = 1;
+  const successStatusIndex = 0;
+  const failedStatusIndex = 1;
+  const noResponseIndex = 2;
+  const runningStatusIndex = 3;
   
   return pie.map((slice, index) => {
     const successColor = "#3cbc33";
     const failedColor = "#e64432";
     const noResponseColor = "#e6e610";
+    const runningColor = "#fac32d";
 
     let sliceColor;
 
-    if (index === successIndex) {
-      sliceColor = successColor
-    } else if (index === failedIndex) {
-      sliceColor = failedColor
-    } else {
-      sliceColor = noResponseColor
+    if (index === successStatusIndex) {
+      sliceColor = successColor;
+    } else if (index === failedStatusIndex) {
+      sliceColor = failedColor;
+    } else if (index === noResponseIndex) {
+      sliceColor = noResponseColor;
+    } else if (index === runningStatusIndex) {
+      sliceColor = runningColor;
     }
     return <path d={arc(slice)} key={index} fill={sliceColor} />;
   });

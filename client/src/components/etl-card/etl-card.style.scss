@@ -17,13 +17,17 @@
 
 
 .success {
-  background: rgb(96, 192, 96)
+  background: rgb(96, 192, 96);
 }
 
 .failed {
-  background: rgb(236, 88, 88)
+  background: rgb(236, 88, 88);
 }
 
 .no-response {
   background: yellow;
+}
+
+.running {
+  background: rgb(250, 195, 45);
 }

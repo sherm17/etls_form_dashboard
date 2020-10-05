@@ -36,25 +36,50 @@ class HomePage extends Component {
     let etlSuccessCount = 0;
     let etlFailedCount = 0;
     let etlNoResponseCount = 0;
+    let etlRunningCount = 0;
+
+    const todaysDate = new Date();
+    const month = String(todaysDate.getMonth() + 1).padStart(2, '0'); 
+    const day  = String(todaysDate.getDate()).padStart(2, '0');
+    const year = todaysDate.getFullYear();
+  
+    const todaysDateStr = `${year}-${month}-${day}`;
 
     if (etlRunStatusArr && etlRunStatusArr.length > 0) {
       etlRunStatusArr.forEach(etl => {
-        const { completed, started } = etl;
-        numOfEtl += 1;
-        if (!started) {
+        let { completed, started, running, date_ran } = etl;
+        numOfEtl += 1;        
+
+        if (date_ran) {
+          const yearMonthDayRegex = /^\d\d\d\d-\d\d-\d\d/g;
+          const dateRanYearMonthDayStr = date_ran.match(yearMonthDayRegex)[0];
+
+          if (dateRanYearMonthDayStr === todaysDateStr) {
+            if (started) {
+              if (running) {
+                etlRunningCount += 1;
+              } else if (completed) {
+                etlSuccessCount += 1;
+              } else if (!completed) {
+                etlFailedCount += 1;
+              } 
+            } else{
+              etlNoResponseCount += 1;
+            }
+          } else {
+            etlNoResponseCount += 1;
+          }
+        } else {
           etlNoResponseCount += 1;
-        } else if (completed === true) {
-          etlSuccessCount += 1;
-        } else if (completed === false) {
-          etlFailedCount += 1;
-        } 
+        }
       });
     }
 
     const etlRunDataForPieGraph = [
       etlSuccessCount,
       etlFailedCount,
-      etlNoResponseCount
+      etlNoResponseCount,
+      etlRunningCount
     ];
 
     return (
@@ -73,6 +98,9 @@ class HomePage extends Component {
             </div>
             <div>
               ETL did not start: {etlNoResponseCount}
+            </div>
+            <div>
+              ETL running: {etlRunningCount}
             </div>
           </div>
 

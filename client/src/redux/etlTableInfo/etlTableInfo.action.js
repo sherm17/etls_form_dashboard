@@ -47,15 +47,22 @@ export function makePostRequestToUpdateEtl(url, updatedData) {
         body: JSON.stringify(updatedData) // body updatedData type must match "Content-Type" header
       })
       .then(res => res.json())
-      .then(newEtlInfo => dispatch(etlTableInfoUpdateSuccess(updatedData)))
+      .then(databaseResponse => {
+        const successfulEdit = databaseResponse.success;
+        if (!successfulEdit) {
+          dispatch(etlTableInfoUpdateHasErrored(true))
+        } else {
+          dispatch(etlTableInfoUpdateSuccess(updatedData));
+        }
+      })
       .catch(e => dispatch(etlTableInfoUpdateHasErrored(true)))
   }
 }
 
-const addNewEtlSuccess = (newEtldata) => {
+const addNewEtlSuccess = (newEtlData) => {
   return {
     type: EtlTableInfoType.ETL_ADD_SUCCESS,
-    newEtldata
+    newEtlData
   }
 }
 
@@ -101,12 +108,6 @@ export function makeDeleteRequestToDeleteEtl(url) {
   }
 }
 
-export function goResetEtlDeleteSuccess() {
-  return {
-    type: EtlTableInfoType.ETL_DELETE_RESET
-  }
-}
-
 export function goResetEtlUpdateSuccess() {
   return {
     type: EtlTableInfoType.ETL_INFO_UPDATE_RESET
@@ -120,8 +121,6 @@ export function timeFormatIsIncorrect() {
 }
 
 export function setEtlAlreadyExist(alreadyExist) {
-  console.log("in set etl already exist action function");
-  console.log(alreadyExist);
   if (alreadyExist) {
     return {
       type: EtlTableInfoType.ETL_ALREADY_EXIST
@@ -130,6 +129,12 @@ export function setEtlAlreadyExist(alreadyExist) {
     return {
       type: EtlTableInfoType.ETL_DOES_NOT_ALREADY_EXIST
     }
+  }
+}
+
+export function etlRunTimeFormatIncorrect() {
+  return {
+    type: EtlTableInfoType.ETL_TIME_FORMAT_INCORRECT
   }
 }
 

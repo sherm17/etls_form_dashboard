@@ -39,17 +39,14 @@ class ETL {
     (etl_name, run_frequency)
     values ($1, $2)
         `
-
     try {
       await pgClient.query("BEGIN");
 
-      pgClient
+      await pgClient
         .query(newEtlInfoInsertQuery, [this.name, this.description, this.data_affected, this.comments, this.start_time, this.end_time, this.etl_path])
         .then(() => pgClient.query("COMMIT"))
         .catch(e => {
-          console.log("unable to add to table info");
-          console.log(e);
-          return;
+          console.log("error on adding etl info");
           throw e
         });
 
@@ -58,30 +55,21 @@ class ETL {
          return "success";
       } else if (this.run_frequency === "Multiple-Days") {
         for (const day of this.days_ran) {
-          console.log("on day " + day);
           await pgClient.query(newEtlRunTimeInsertQuery, [this.name, day]);
           await pgClient.query("COMMIT");
         }
         return "success";
       }
-      pgClient.on("error", function(e) {
-        console.log("========== error ===========");
-      })
     } catch (e) {
-      console.log(e)
       throw e;
-
     }
-
   }
-
 
   static async updateETLDetail(reqBody) {
     let {
       name, description, data_affected, days_ran,
       comments, run_frequency, start_time, end_time, etl_path
     } = reqBody;
-
     
     try {
       await pgClient.query("BEGIN");
@@ -90,7 +78,12 @@ class ETL {
         DELETE FROM etl_run_times
         WHERE etl_name = '${name}'
       `;
-      // console.log(JSON.parse(reqBody));
+      
+      if (end_time !== null && end_time !== "") {
+        end_time = `'${end_time}'`
+      } else if (end_time === "") {
+        end_time = null;
+      }
 
       const updateQuery = `
         UPDATE etls SET
@@ -98,11 +91,10 @@ class ETL {
           data_affected = '${data_affected}',
           comments = '${comments}',
           start_time = '${start_time}',
-          end_time = '${end_time}',
+          end_time = ${end_time},
           etl_path = '${etl_path}'
           WHERE name = '${name}'
         `
-
       const insertQuery = `
         insert into etl_run_times
         (etl_name, run_frequency)
@@ -110,27 +102,35 @@ class ETL {
         ($1, $2)
         `
 
-      pgClient
+      await pgClient
         .query(updateQuery)
         .then(() => {
           pgClient.query("COMMIT");
         })
-        .catch(e => console.log(e));
+        .catch(e => {
+          console.log(e);
+          throw e
+        });
 
-      pgClient
+      await pgClient
         .query(deleteRunFreqQuery)
         .then(() => {
           pgClient.query("COMMIT");
         })
-        .catch(e => console.log(e));
+        .catch(e => {
+          console.log("error deleteing etl run freq old data")
+          throw e
+        });
 
       if (run_frequency === "Daily") {
-        
         pgClient.query(insertQuery, [name, 'Daily'])
-          .then(() => "updated daily");
+          .then(() => "updated daily")
+          .catch(e => {
+            throw e
+          });
+
       } else {
           for (const day of days_ran) {
-            console.log("on day " + day);
 
             await pgClient.query(insertQuery, [name, day])
             await pgClient.query("COMMIT");
@@ -138,6 +138,8 @@ class ETL {
           return "success";
       }
     } catch (e) {
+      console.log("trying to roll back");
+      console.log(e);
       await pgClient.query("ROLLBACK");
       throw e
     }
@@ -151,14 +153,15 @@ class ETL {
   }
 
   static getRunStatues(dateStr) {
+
     const getRunStatusQuery = `
-      SELECT
-      *
-      FROM
-      etls
-      LEFT JOIN etls_run_status
-      ON name = etl_name
-      Where etls_run_status.date_ran = '${dateStr}' or etls_run_status.date_ran is null;
+      SELECT * FROM etls left join
+      (
+        SELECT distinct on (etl_name) * from etls_run_status
+        order by etl_name, date_ran desc
+      ) s
+      on
+      etls.name= s.etl_name
     `
     return pgClient.query(getRunStatusQuery);
   }

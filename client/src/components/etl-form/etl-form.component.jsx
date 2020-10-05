@@ -17,9 +17,9 @@ import Button from "./button/button.component";
 
 // actions
 import { 
-  makePostRequestToUpdateEtl, makePostRequestForNewEtl, makeDeleteRequestToDeleteEtl, goResetEtlDeleteSuccess,
-  goResetEtlUpdateSuccess, timeFormatIsIncorrect, setEtlAlreadyExist, resetEtlUpdateVals
-  } from "../../redux/etlTableInfo/etlTableInfo.action";
+  makePostRequestToUpdateEtl, makePostRequestForNewEtl, makeDeleteRequestToDeleteEtl, timeFormatIsIncorrect, setEtlAlreadyExist, resetEtlUpdateVals, etlRunTimeFormatIncorrect
+  } 
+  from "../../redux/etlTableInfo/etlTableInfo.action";
 
 
 const EtlChangeMessage = ({ message }) => {
@@ -48,12 +48,15 @@ class EtlForm extends Component {
         selectedEtlComments: "",
         selectedEtlRunTime: "Daily",
 
-        newEtlName: ""
+        newEtlName: "",
+
+        selectedRanTimesIsCorrect: null
+
       }
     }
 
     componentDidMount() {
-      const {resetEtlUpdateVals } = this.props;
+      const { resetEtlUpdateVals } = this.props;
       resetEtlUpdateVals();
     }
     
@@ -63,9 +66,9 @@ class EtlForm extends Component {
         Handle etl selection menun change. Update state with info about etl
       */
 
-      const { resetEtlDeleteSuccess, resetEtlUpdateSuccess } = this.props;
-      resetEtlDeleteSuccess();
-      resetEtlUpdateSuccess();
+      const { resetEtlUpdateVals } = this.props;
+
+      resetEtlUpdateVals();
 
       e.preventDefault();
       const etlName = e.target.value;
@@ -114,6 +117,7 @@ class EtlForm extends Component {
         selectedEtlDataAffect: data_affected,
         selectedEtlDesc: description,
         selectedEtlComments: comments,
+
 
       });
     }
@@ -217,6 +221,13 @@ class EtlForm extends Component {
       return false;
     }
 
+    checkRunTimeFormat = (daysRan, etlStartTimes) => {
+      if (daysRan.length === 0 && etlStartTimes === "Multiple-Days") {
+        return false;
+      }
+      return true;
+    }
+
     handleSubmit = (e) => {
       /*
         Handles form submit
@@ -232,12 +243,19 @@ class EtlForm extends Component {
       } = this.state;
 
       const { 
-        updateEtlInfo, isEditing, createNewEtl, setTimeFormatIncorrect, etlInfo, setEtlAlreadyExist 
+        updateEtlInfo, isEditing, createNewEtl, setTimeFormatIncorrect, etlInfo, setEtlAlreadyExist, etlRunTimeFormatIncorrect
       } = this.props;
 
-      
+      const runTimeFormatIsCorrect = this.checkRunTimeFormat(days_ran, selectedEtlRunTime);
+
+      // console.log(days_ran, selectedEtlRunTime);
+      // console.log(runTimeFormatIsCorrect);
+
       const startTimeIsValidFormat = this.timeIsCorrectFormat(selectedEtlStartTime);
-      const endTimeIsValidFormat = this.timeIsCorrectFormat(selectedEtlEndTime);
+      
+      // etl end time can be empty or has to be in 00:00:00 format
+      const endTimeIsValidFormat = this.timeIsCorrectFormat(selectedEtlEndTime) || 
+        (selectedEtlEndTime === "" || selectedEtlEndTime === null);
 
       const updatedEtlInfo = {
         name:  isEditing ? selectedEtlName : newEtlName,
@@ -254,14 +272,24 @@ class EtlForm extends Component {
 
       if (startTimeIsValidFormat && endTimeIsValidFormat) {
         if (isEditing) { 
-          updateEtlInfo(etlUrlEndPoint, updatedEtlInfo);
+          if (runTimeFormatIsCorrect) {
+            updateEtlInfo(etlUrlEndPoint, updatedEtlInfo);
+          } else {
+            // display message saying run time format is incorrect
+            etlRunTimeFormatIncorrect()
+          }
         } else {
           const etlAlreadyExist = etlInfo.hasOwnProperty(newEtlName);
           if (etlAlreadyExist) {
-            setEtlAlreadyExist(true)
+            setEtlAlreadyExist(true);
           } else {
-            createNewEtl(etlUrlEndPoint, updatedEtlInfo);
-            setEtlAlreadyExist(false)
+            if (runTimeFormatIsCorrect) {
+              createNewEtl(etlUrlEndPoint, updatedEtlInfo);
+              setEtlAlreadyExist(false);
+            } else {
+              // display message saying run time is incorrect
+              etlRunTimeFormatIncorrect()
+            }
           }
         }
       } else {
@@ -294,10 +322,56 @@ class EtlForm extends Component {
         selectedEtlRunTime: "",
 
         newEtlName: "",
-
-      })
+      });
     }
 
+    getDisplayMessageForSubmit() {
+      let message;
+      
+      const { 
+        etlDeleteWasSuccessful, etlUpdateWasSuccessful, etlAddWasSuccessful, timeFormatEntryIsCorrect, etlAlreadyExist,
+        etlRunTimeFormatCorrect
+      } = this.props;
+
+      if (!etlRunTimeFormatCorrect) {
+        message = "Please check your run time selections";
+      }
+
+      if (etlDeleteWasSuccessful !== null) {
+        if (etlDeleteWasSuccessful) {
+          message = "ETL delete successful";
+        } else if (!etlDeleteWasSuccessful) {
+          message = "ETL delete was not successful. An error may have occured";
+        }
+      }
+
+      if (etlUpdateWasSuccessful !== null) {
+        if (etlUpdateWasSuccessful) {
+          message = "ETL update was successful";
+        } else if (! etlUpdateWasSuccessful) {
+          message = "ETL update was not successful. An error may have occured. Please check backend of application";
+        }
+      }
+
+      if (etlAddWasSuccessful !== null) {
+        if (etlAddWasSuccessful) {
+          message = "ETL add was successful";
+        } else if (! etlAddWasSuccessful) {
+          message = "ETL add was not successful. An error may have occured. Please check backend of application";
+        }
+      }
+
+      if (timeFormatEntryIsCorrect !== null) {
+        if (!timeFormatEntryIsCorrect) {
+          message = "Time format is incorrect";
+        }
+      }
+
+      if (etlAlreadyExist) {
+        message = "ETL name already exist. Please choose another name";
+      }
+      return message;
+    }
 
     render() {
       let { showDailyRunCheckbox, selectedEtlStartTime, selectedEtlEndTime,
@@ -306,44 +380,11 @@ class EtlForm extends Component {
       } = this.state;
 
       const { 
-        isEditing, etlDeleteWasSuccessful, etlUpdateWasSuccessful, etlAddWasSuccessful, timeFormatEntryIsCorrect, etlAlreadyExist
+        isEditing
       } = this.props;
-      let displayMessageForSubmit;
 
-      if (etlDeleteWasSuccessful !== null) {
-        if (etlDeleteWasSuccessful) {
-          displayMessageForSubmit = "ETL delete successful";
-        } else if (!etlDeleteWasSuccessful) {
-          displayMessageForSubmit = "ETL delete was not successful. An error may have occured";
-        }
-      }
-
-      if (etlUpdateWasSuccessful !== null) {
-        if (etlUpdateWasSuccessful) {
-          displayMessageForSubmit = "ETL update was successful";
-        } else if (! etlUpdateWasSuccessful) {
-          displayMessageForSubmit = "ETL update was not successful. An error may have occured";
-        }
-      }
-
-      if (etlAddWasSuccessful !== null) {
-        if (etlAddWasSuccessful) {
-          displayMessageForSubmit = "ETL add was successful";
-        } else if (! etlAddWasSuccessful) {
-          displayMessageForSubmit = "ETL add was not successful. An error may have occured";
-        }
-      }
-
-      if (timeFormatEntryIsCorrect !== null) {
-        if (!timeFormatEntryIsCorrect) {
-          displayMessageForSubmit = "Time format is incorrect";
-        }
-      }
-
-      if (etlAlreadyExist) {
-        displayMessageForSubmit = "ETL name already exist. Please choose another name";
-      }
-  
+      let displayMessageForSubmit = this.getDisplayMessageForSubmit();
+      
       selectedEtlComments = this.replaceNullWithEmptyString(selectedEtlComments);
       selectedEtlStartTime = this.replaceNullWithEmptyString(selectedEtlStartTime);
       selectedEtlEndTime = this.replaceNullWithEmptyString(selectedEtlEndTime);
@@ -353,7 +394,6 @@ class EtlForm extends Component {
 
       const { etlNames } = this.props;
       
-      // console.log(etlNames);
       const etlNameSelectionMenu = this.constructEtlSelectionMenu(etlNames);
 
       let disableButton;
@@ -519,7 +559,8 @@ const mapStateToProps = (state) => {
   const etlUpdateIsSuccessful = state.etlTableInfo.updateSuccess;
   const etlAddIsSuccessful = state.etlTableInfo.etlAddSuccess;
   const etlTimeFormatIsCorrect = state.etlTableInfo.timeFormatCorrect
-  const etlAlreadyExist = state.etlTableInfo.etlAlreadyExist
+  const etlAlreadyExist = state.etlTableInfo.etlAlreadyExist;
+  const etlRunTimeFormatCorrect = state.etlTableInfo.etlRunTimeFormatCorrect;
   // Do a check to see if dispatch has finished
   if (etlNamesList) {
     return {
@@ -529,7 +570,8 @@ const mapStateToProps = (state) => {
       etlUpdateWasSuccessful: etlUpdateIsSuccessful,
       etlAddWasSuccessful: etlAddIsSuccessful,
       timeFormatEntryIsCorrect:  etlTimeFormatIsCorrect,
-      etlAlreadyExist: etlAlreadyExist
+      etlAlreadyExist: etlAlreadyExist,
+      etlRunTimeFormatCorrect: etlRunTimeFormatCorrect
 
     }
   } else {
@@ -545,11 +587,10 @@ const mapDispatchToProps = (dispatch) => {
     updateEtlInfo: (url, data) => dispatch(makePostRequestToUpdateEtl(url, data)),
     createNewEtl: (url, data) => dispatch(makePostRequestForNewEtl(url, data)),
     deleteEtl: (url) => dispatch(makeDeleteRequestToDeleteEtl(url)),
-    resetEtlDeleteSuccess: () => dispatch(goResetEtlDeleteSuccess()),
-    resetEtlUpdateSuccess: () => dispatch(goResetEtlUpdateSuccess()),
     setTimeFormatIncorrect: () => dispatch(timeFormatIsIncorrect()),
     setEtlAlreadyExist: (bool) => dispatch(setEtlAlreadyExist(bool)),
-    resetEtlUpdateVals: () => dispatch(resetEtlUpdateVals())
+    resetEtlUpdateVals: () => dispatch(resetEtlUpdateVals()),
+    etlRunTimeFormatIncorrect: () => dispatch(etlRunTimeFormatIncorrect())
   }
 }
 

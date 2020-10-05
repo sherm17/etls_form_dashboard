@@ -7,16 +7,25 @@ const INITIAL_STATE = {
   etlAddSuccess: null,
   deleteEtlSuccess: null,
   timeFormatCorrect: null,
-  etlAlreadyExist: false
+  etlAlreadyExist: false,
+  etlRunTimeFormatCorrect: true
 }
 
+const startingState = {
+  updateSuccess: null,
+  etlAddSuccess: null,
+  deleteEtlSuccess: null,
+  timeFormatCorrect: null,
+  etlAlreadyExist: false,
+  etlRunTimeFormatCorrect: true
+}
 
 export function etlTableInfoReducer(state = INITIAL_STATE, action) {
   switch (action.type) {
     case EtlTableInfoType.ETL_INFO_FETCH_SUCCESS:
       const etlTableInfoData = action.etlTableInfo.data;
       let etlInfoObj = {}
-      const etlNamesArr = []
+      const etlNamesArr = [];
       etlTableInfoData.forEach(etlInfo => {
         const { name, run_frequency } = etlInfo;
         const existingEtlInfo = etlInfoObj[name];
@@ -45,25 +54,41 @@ export function etlTableInfoReducer(state = INITIAL_STATE, action) {
 
     case EtlTableInfoType.ETL_INFO_UPDATE_SUCCESS:
       const { updatedEtlInfo } = action;
-      const { name } = updatedEtlInfo;
       const etlInfoCopy = { ...state.etlInfo };
+
+      var { name } = updatedEtlInfo;
       etlInfoCopy[name] = updatedEtlInfo;
 
       return {
         ...state,
         etlInfo: etlInfoCopy,
-        updateSuccess: true
+        updateSuccess: true, 
+        timeFormatCorrect: null,
+        etlRunTimeFormatCorrect: true
+      }
+
+    case EtlTableInfoType.ETL_INFO_UPDATE_ERROR:
+      return {
+        ...state,
+        updateSuccess: false
       }
 
     case EtlTableInfoType.ETL_ADD_SUCCESS:
+      const { newEtlData } = action;
+      const newEtlName = newEtlData.name;
+      const etlInfoToModify = { ...state.etlInfo };
+      etlInfoToModify[newEtlName] = newEtlData;
       return {
         ...state, 
+        etlInfo: etlInfoToModify,
         etlAddSuccess: true,
         timeFormatCorrect: null,  
+        updateSuccess: null,
+        etlRunTimeFormatCorrect: true,
+        etlAlreadyExist: false
       }
 
     case EtlTableInfoType.ETL_ADD_ERROR:
-      console.log("FAIIILED TO ADD ETL TO DATABASE");
       return {
         ...state,
         etlAddSuccess: false,
@@ -85,30 +110,17 @@ export function etlTableInfoReducer(state = INITIAL_STATE, action) {
         timeFormatCorrect: null,
       }
 
-    case EtlTableInfoType.ETL_DELETE_RESET:
-      return {
-        ...state,
-        deleteEtlSuccess: null,
-        timeFormatCorrect: null, 
-      }
-
-    case EtlTableInfoType.ETL_INFO_UPDATE_RESET:
-      return {
-        ...state,
-        updateSuccess: null,
-        timeFormatCorrect: null,
-      }
-
     case EtlTableInfoType.ETL_TIME_FORMAT_WRONG:
       return {
         ...state,
+        ...startingState,
         timeFormatCorrect: false,
       }
 
     case EtlTableInfoType.ETL_ALREADY_EXIST: {
-      console.log("ETL ALREADY EXCIST");
       return {
         ...state,
+        ...startingState,
         etlAlreadyExist: true
       }
     }
@@ -116,6 +128,7 @@ export function etlTableInfoReducer(state = INITIAL_STATE, action) {
     case EtlTableInfoType.ETL_DOES_NOT_ALREADY_EXIST: {
       return {
         ...state,
+        ...startingState,
         etlAlreadyExist: false
       }
     }
@@ -123,11 +136,16 @@ export function etlTableInfoReducer(state = INITIAL_STATE, action) {
     case EtlTableInfoType.RESET_ETL_UPDATE_VALUES: {
       return {
         ...state,
-        updateSuccess: null,
-        etlAddSuccess: null,
-        deleteEtlSuccess: null,
-        timeFormatCorrect: null,
-        etlAlreadyExist: false
+        ...startingState
+      }
+    }
+
+    case EtlTableInfoType.ETL_TIME_FORMAT_INCORRECT: {
+      return {
+        ...state,
+        ...startingState,
+        etlRunTimeFormatCorrect: false,
+        
       }
     }
 

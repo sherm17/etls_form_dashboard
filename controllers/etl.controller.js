@@ -33,13 +33,12 @@ exports.createEtl = (req, res) => {
 
   newEtl.addToDatabase()
     .then(databaseResponse => {
-      console.log(databaseResponse);
-      console.log('--------- SUCCESS --------')
-      apiResponse.message = 'successfully added new ETL';
+      apiResponse.message = "successfully added new ETL";
       res.send(apiResponse);
     })
     .catch(e => {
-      console.log("-------- wtf --------");
+      console.log("-----error--------");
+      console.log(e);
       apiResponse.success = false;
       apiResponse.message = "Failed to create new ETL"
       res.send(apiResponse)
@@ -66,10 +65,12 @@ exports.updateETLInfo = (req, res) => {
 
   ETL.updateETLDetail(updatedReqBody)
     .then(updateSuccess => {
+      console.log("--------------success----------------");
       apiResponse.message = "successfully updated ETL info";
       res.send(apiResponse);
     })
     .catch(e => {
+      console.log("-----------error----------");
       apiResponse.success = false;
       apiResponse.message = "ETL info update unsucessful";
       res.send(apiResponse);
@@ -111,7 +112,6 @@ exports.getETLRunStatus = (req, res) => {
     month = String(todaysDate.getMonth() + 1).padStart(2, '0'); 
     day  = String(todaysDate.getDate()).padStart(2, '0');
     year = todaysDate.getFullYear();
-
   }
 
   const dateString = `${month}-${day}-${year}`;
