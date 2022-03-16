@@ -4,7 +4,7 @@ const pgClient = new Client({
   user: 'postgres',
   host: 'localhost',
   database: 'etl_dashboard',
-  password: 'password',
+  password: '',
   port: '5433'
 });
 
